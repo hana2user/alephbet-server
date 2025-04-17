@@ -133,8 +133,12 @@ app.post('/api/predict', async (req, res) => {
     // Проверка глубже — тип одного пикселя
     console.log('Тип пикселя:', typeof image[0][0]);
 
+    const imageExpanded = image.map(row => row.map(v => [v]));
     // Преобразуем в tensor4d
-    const input = tf.tensor4d([image], [1, 28, 28, 1]);
+    console.log('imageExpanded', imageExpanded);
+    const input = tf.tensor4d(
+      [imageExpanded], 
+      [1, 28, 28, 1]);
     console.log('tensor4d создан успешно');
 
     const model = await tf.loadLayersModel('file://model/model.json');
