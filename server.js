@@ -93,7 +93,7 @@ app.post('/api/predict', async (req, res) => {
         return res.status(400).send('Неверный формат изображения');
       }
   
-      const x = tf.tensor4d([image], [1, 28, 28, 1]);
+      const x = tf.tensor4d(image, [1, 28, 28, 1]);
       const model = await tf.loadLayersModel('file://model/model.json');
   
       const prediction = model.predict(x);
