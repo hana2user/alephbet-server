@@ -85,26 +85,69 @@ app.post('/api/train', async (req, res) => {
   }
 });
 
-app.post('/api/predict', async (req, res) => {
-    try {
-      const { image } = req.body; // [28][28]
+// app.post('/api/predict', async (req, res) => {
+//     try {
+//       const { image } = req.body; // [28][28]
 
-      if (!image || !Array.isArray(image)) {
-        return res.status(400).send('Неверный формат изображения');
-      }
+//       if (!image || !Array.isArray(image)) {
+//         return res.status(400).send('Неверный формат изображения');
+//       }
   
-      const x = tf.tensor4d(image, [1, 28, 28, 1]);
-      const model = await tf.loadLayersModel('file://model/model.json');
+//       const x = tf.tensor4d(image, [1, 28, 28, 1]);
+//       const model = await tf.loadLayersModel('file://model/model.json');
   
-      const prediction = model.predict(x);
-      const result = prediction.argMax(1).dataSync()[0];
+//       const prediction = model.predict(x);
+//       const result = prediction.argMax(1).dataSync()[0];
   
-      res.json({ prediction: result });
-    } catch (err) {
-      console.error(err);
-      res.status(500).send('Ошибка предсказания');
+//       res.json({ prediction: result });
+//     } catch (err) {
+//       console.error(err);
+//       res.status(500).send('Ошибка предсказания');
+//     }
+//   });
+
+app.post('/api/predict', async (req, res) => {
+  try {
+    const { image } = req.body;
+
+    // Логируем размер и тип
+    console.log('Raw image type:', typeof image);
+    console.log('Raw image shape (by .length):', image.length, image[0]?.length);
+    console.log('image:', image);
+    console.log(JSON.stringify(image));
+
+    // Проверка содержимого:
+    if (!Array.isArray(image) || !Array.isArray(image[0])) {
+      throw new Error('Некорректный формат изображения: ожидается массив 28x28');
     }
-  });
+
+    // Проверка значений
+    const flat = image.flat();
+    const sampleValues = flat.slice(0, 10);
+    console.log('Sample pixel values:', sampleValues);
+
+    // Проверка первых элементов
+    console.log('Примеры значений image[0]:', image[0].slice(0, 5));
+    console.log('Примеры значений image[1]:', image[1].slice(0, 5));
+
+    // Проверка глубже — тип одного пикселя
+    console.log('Тип пикселя:', typeof image[0][0]);
+
+    // Преобразуем в tensor4d
+    const input = tf.tensor4d([image], [1, 28, 28, 1]);
+    console.log('tensor4d создан успешно');
+
+    const model = await tf.loadLayersModel('file://model/model.json');
+    const prediction = model.predict(input);
+    const result = prediction.argMax(1).dataSync()[0];
+
+    res.json({ prediction: result });
+  } catch (err) {
+    console.error('Prediction error:', err);
+    res.status(500).send('Ошибка предсказания');
+  }
+});
+
 
 app.post('/api/hello', async (req, res) => {
 
