@@ -13,6 +13,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 const DATA_FILE = 'data.jsonl';
+let labelToIndex = {}; // словарь для кодирования меток
+let indexToLabel = {}; // обратный словарь для декодирования
 
 // ✅ Добавление примера (изображение 28x28 и метка)
 app.post('/api/add-example', async (req, res) => {
@@ -23,8 +25,6 @@ app.post('/api/add-example', async (req, res) => {
     image.length !== 28 ||
     !Array.isArray(image[0]) ||
     image[0].length !== 28
-    // typeof label !== 'number' ||
-    // ![0, 1, 2].includes(label)
   ) {
     return res.status(400).send('Неверный формат данных');
   }
@@ -58,12 +58,23 @@ app.post('/api/train', async (req, res) => {
 
     const imagesExpanded = images.map(img => img.map(row => row.map(val => [val])));
     const x = tf.tensor4d(imagesExpanded, [images.length, 28, 28, 1]).div(255);
-    const y = tf.tensor1d(labels, 'float32');
+
+    // Кодирование меток в индексы
+    const uniqueLabels = [...new Set(labels)];
+    labelToIndex = {};
+    indexToLabel = {};
+    uniqueLabels.forEach((label, i) => {
+      labelToIndex[label] = i;
+      indexToLabel[i] = label;
+    });
+
+    const encodedLabels = labels.map(label => labelToIndex[label]);
+    const y = tf.tensor1d(encodedLabels, 'int32');
 
     const model = tf.sequential();
     model.add(tf.layers.flatten({ inputShape: [28, 28, 1] }));
     model.add(tf.layers.dense({ units: 64, activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 3, activation: 'softmax' }));
+    model.add(tf.layers.dense({ units: uniqueLabels.length, activation: 'softmax' }));
 
     model.compile({
       optimizer: 'adam',
@@ -85,67 +96,19 @@ app.post('/api/train', async (req, res) => {
   }
 });
 
-// app.post('/api/predict', async (req, res) => {
-//     try {
-//       const { image } = req.body; // [28][28]
-
-//       if (!image || !Array.isArray(image)) {
-//         return res.status(400).send('Неверный формат изображения');
-//       }
-  
-//       const x = tf.tensor4d(image, [1, 28, 28, 1]);
-//       const model = await tf.loadLayersModel('file://model/model.json');
-  
-//       const prediction = model.predict(x);
-//       const result = prediction.argMax(1).dataSync()[0];
-  
-//       res.json({ prediction: result });
-//     } catch (err) {
-//       console.error(err);
-//       res.status(500).send('Ошибка предсказания');
-//     }
-//   });
-
 app.post('/api/predict', async (req, res) => {
   try {
     const { image } = req.body;
 
-    // Логируем размер и тип
-    console.log('Raw image type:', typeof image);
-    console.log('Raw image shape (by .length):', image.length, image[0]?.length);
-    console.log('image:', image);
-    console.log(JSON.stringify(image));
-
-    // Проверка содержимого:
-    if (!Array.isArray(image) || !Array.isArray(image[0])) {
-      throw new Error('Некорректный формат изображения: ожидается массив 28x28');
-    }
-
-    // Проверка значений
-    const flat = image.flat();
-    const sampleValues = flat.slice(0, 10);
-    console.log('Sample pixel values:', sampleValues);
-
-    // Проверка первых элементов
-    console.log('Примеры значений image[0]:', image[0].slice(0, 5));
-    console.log('Примеры значений image[1]:', image[1].slice(0, 5));
-
-    // Проверка глубже — тип одного пикселя
-    console.log('Тип пикселя:', typeof image[0][0]);
-
     const imageExpanded = image.map(row => row.map(v => [v]));
-    // Преобразуем в tensor4d
-    console.log('imageExpanded', imageExpanded);
-    const input = tf.tensor4d(
-      [imageExpanded], 
-      [1, 28, 28, 1]);
-    console.log('tensor4d создан успешно');
+    const input = tf.tensor4d([imageExpanded], [1, 28, 28, 1]);
 
     const model = await tf.loadLayersModel('file://model/model.json');
     const prediction = model.predict(input);
     const result = prediction.argMax(1).dataSync()[0];
+    const label = indexToLabel[result] || 'unknown';
 
-    res.json({ prediction: result });
+    res.json({ prediction: result, label });
   } catch (err) {
     console.error('Prediction error:', err);
     res.status(500).send('Ошибка предсказания');
