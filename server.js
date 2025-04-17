@@ -69,7 +69,7 @@ app.post('/api/train', async (req, res) => {
     });
 
     const encodedLabels = labels.map(label => labelToIndex[label]);
-    const y = tf.tensor1d(encodedLabels, 'int32');
+    const y = tf.tensor1d(encodedLabels, 'float32');
 
     const model = tf.sequential();
     model.add(tf.layers.flatten({ inputShape: [28, 28, 1] }));
