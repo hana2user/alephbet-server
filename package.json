@@ -1,0 +1,16 @@
+{
+  "name": "alephbet-server",
+  "version": "1.0.0",
+  "description": "server of alephbet app",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "hana2user@gmail.com",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}
