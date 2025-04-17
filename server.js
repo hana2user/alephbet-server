@@ -5,7 +5,7 @@ import * as tf from '@tensorflow/tfjs-node';
 import { readFileSync } from 'fs';
 
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
+    origin: ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', 'https://alephbet-ui.onrender.com'],
 };
 
 const app = express();
