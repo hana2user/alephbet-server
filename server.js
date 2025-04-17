@@ -77,7 +77,7 @@ app.post('/api/train', async (req, res) => {
       shuffle: true,
     });
 
-    await model.save('downloads://model');
+    await model.save('file://model');
     res.send('Модель обучена и сохранена!');
   } catch (err) {
     console.error('Ошибка обучения:', err);
