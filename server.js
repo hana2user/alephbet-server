@@ -80,6 +80,9 @@ app.post('/api/train', async (req, res) => {
       indexToLabel[i] = label;
     });
 
+    console.log('labelToIndex:', labelToIndex);
+    console.log('indexToLabel:', indexToLabel);
+
     const encodedLabels = labels.map(label => labelToIndex[label]);
     const y = tf.tensor1d(encodedLabels, 'float32');
 
@@ -95,7 +98,7 @@ app.post('/api/train', async (req, res) => {
     });
 
     await model.fit(x, y, {
-      epochs: 5,
+      epochs: 20,
       batchSize: 32,
       shuffle: true,
     });
