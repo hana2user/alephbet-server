@@ -102,6 +102,11 @@ app.post('/api/predict', async (req, res) => {
     }
   });
 
+app.post('/api/hello', async (req, res) => {
+
+  res.status('200').send('Hello from server!');
+})  
+
 // ✅ Запуск сервера
 app.listen(3000, () => {
   console.log('Сервер запущен: http://localhost:3000');
