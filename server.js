@@ -33,7 +33,19 @@ app.post('/api/add-example', async (req, res) => {
 
   try {
     await fs.appendFile(DATA_FILE, entry);
-    res.sendStatus(200);
+
+    const lines = readFileSync(DATA_FILE, 'utf-8')
+      .split('\n')
+      .filter(l => l.trim() !== '');
+
+    const labels = {};
+
+    for (const line of lines) {
+      const { label } = JSON.parse(line);
+      labels[label] = (labels[label] || 0) + 1;
+    }
+
+    res.status(200).json({labels});
   } catch (err) {
     console.error('Ошибка записи:', err);
     res.status(500).send('Ошибка сервера');
